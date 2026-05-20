@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  :root {
+    --bg: #1a1410; --panel: #241c16; --panel-2: #2e2520;
+    --ink: #f5ead4; --ink-soft: #b09c84; --line: #3d3128;
+    --accent: #e0a36b; --green: #88c070; --red: #e07060; --gold: #d4b070;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f5f0eb; font-family: 'DM Sans', sans-serif; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(12px);} to { opacity:1; transform:translateY(0);} }
-  .order-card { animation: fadeUp 0.3s ease both; transition: transform 0.2s, box-shadow 0.2s; }
-  .order-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.10); }
-  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-  .pending-dot { animation: blink 1.2s infinite; }
+  body { font-family: "Noto Sans KR", sans-serif; background: var(--bg); color: var(--ink); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .order-card { animation: fadeUp .3s ease both; transition: transform .2s; }
+  .order-card:hover { transform: translateY(-2px); }
+  .blink { animation: pulse 1.2s infinite; }
 `
 
 export default function KitchenDisplay() {
@@ -20,12 +25,11 @@ export default function KitchenDisplay() {
 
   useEffect(() => {
     fetchOrders()
-    const subscription = supabase
-      .channel('orders')
+    const sub = supabase.channel('orders')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .subscribe()
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => { supabase.removeChannel(subscription); clearInterval(timer) }
+    return () => { supabase.removeChannel(sub); clearInterval(timer) }
   }, [])
 
   async function fetchOrders() {
@@ -41,9 +45,7 @@ export default function KitchenDisplay() {
 
   async function updateStatus(orderId, status) {
     const updateData = { status }
-    if (status === 'done') {
-      updateData.completed_at = new Date().toISOString()
-    }
+    if (status === 'done') updateData.completed_at = new Date().toISOString()
     await supabase.from('orders').update(updateData).eq('id', orderId)
     fetchOrders()
   }
@@ -60,100 +62,126 @@ export default function KitchenDisplay() {
   return (
     <>
       <style>{styles}</style>
-      <div style={{ minHeight: '100vh', background: '#f5f0eb' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
         {/* 헤더 */}
-        <header style={{ background: '#1c1814', padding: '0 32px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span style={{ fontFamily: 'Cormorant Garamond', color: '#d4b896', fontSize: '24px', fontWeight: 600 }}>
-              주방 디스플레이
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <span style={{ background: '#fff3e0', color: '#e65100', padding: '4px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600 }}>
-                대기 {waitCount}건
-              </span>
-              <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '4px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 600 }}>
-                조리중 {cookingCount}건
-              </span>
+        <header style={{ padding: '18px 28px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--panel)' }}>
+          <div>
+            <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em' }}>
+              맛집<span style={{ color: 'var(--accent)' }}>.</span> <span style={{ fontWeight: 300, color: 'var(--ink-soft)' }}>주방</span>
             </div>
+            <div style={{ fontSize: '12px', color: 'var(--ink-soft)', letterSpacing: '.2em', textTransform: 'uppercase', marginTop: '2px' }}>Kitchen Display</div>
           </div>
-          <div style={{ color: '#a08060', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
-            {currentTime.toLocaleTimeString('ko-KR')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '999px', background: 'rgba(136,192,112,.12)', fontSize: '12px', color: 'var(--green)' }}>
+              <span className="blink" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
+              LIVE
+            </div>
+            <div style={{ color: 'var(--ink-soft)', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>
+              {currentTime.toLocaleTimeString('ko-KR')}
+            </div>
           </div>
         </header>
 
-        <main style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+        {/* 통계 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', padding: '22px 28px', background: 'var(--panel)', borderBottom: '1px solid var(--line)' }}>
+          {[
+            { label: '조리 중', value: cookingCount, color: 'var(--green)', unit: '건' },
+            { label: '대기', value: waitCount, color: 'var(--gold)', unit: '건' },
+            { label: '총 대기', value: orders.length, color: 'var(--accent)', unit: '건' },
+          ].map((stat, idx) => (
+            <div key={idx} style={{ background: 'var(--panel-2)', padding: '18px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase' }}>{stat.label}</div>
+              <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '36px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
+                {stat.value} <span style={{ fontSize: '16px' }}>{stat.unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
 
-          {/* 대기 컬럼 */}
+        {/* 주문 컬럼 */}
+        <main style={{ padding: '22px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px' }}>
+
+          {/* 대기 */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <span className="pending-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#e65100', display: 'inline-block' }} />
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#e65100', letterSpacing: '0.05em' }}>대기중</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <span className="blink" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', display: 'inline-block' }} />
+              <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '16px', color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase' }}>대기중</span>
             </div>
             {pending.length === 0 && (
-              <div style={{ color: '#bbb', fontSize: '14px', padding: '40px', textAlign: 'center', border: '2px dashed #e8ddd4', borderRadius: '16px', background: 'white' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-soft)', fontSize: '14px', border: '1px dashed var(--line)', borderRadius: '12px' }}>
                 대기 주문 없음
               </div>
             )}
             {pending.map((order, idx) => (
               <div key={order.id} className="order-card"
-                style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '12px', borderLeft: '4px solid #ff9800', animationDelay: `${idx * 0.05}s` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#1c1814' }}>
+                style={{ padding: '14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--panel-2)', borderLeft: '4px solid var(--gold)', animationDelay: `${idx * 0.05}s` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '22px' }}>
                     #{order.id.slice(-4).toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '12px', color: '#aaa', background: '#f5f0eb', padding: '3px 10px', borderRadius: '10px' }}>
-                    {getElapsed(order.created_at)}
-                  </span>
+                  </div>
+                  <div style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '999px', background: 'rgba(212,176,112,.18)', color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                    대기 중
+                  </div>
                 </div>
-                <ul style={{ listStyle: 'none', marginBottom: '16px' }}>
+                <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: '8px' }}>
                   {order.order_items?.map(item => (
-                    <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #f0ebe4', fontSize: '14px', color: '#444' }}>
-                      <span>{item.menus?.name}</span>
-                      <span style={{ color: '#a08060', fontWeight: 600 }}>×{item.quantity}</span>
-                    </li>
+                    <div key={item.id}>
+                      <strong style={{ color: 'var(--ink)' }}>{item.menus?.name}</strong> × {item.quantity}
+                    </div>
                   ))}
-                </ul>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px dashed var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
+                    {order.total_price?.toLocaleString()}원
+                  </div>
+                  <div>{getElapsed(order.created_at)}</div>
+                </div>
                 <button onClick={() => updateStatus(order.id, 'cooking')}
-                  style={{ width: '100%', padding: '12px', background: '#1c1814', color: '#d4b896', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans' }}>
+                  style={{ width: '100%', marginTop: '10px', padding: '10px', background: 'var(--green)', color: '#1a1410', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   조리 시작 →
                 </button>
               </div>
             ))}
           </div>
 
-          {/* 조리중 컬럼 */}
+          {/* 조리중 */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1565c0', display: 'inline-block' }} />
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#1565c0', letterSpacing: '0.05em' }}>조리중</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
+              <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '16px', color: 'var(--green)', letterSpacing: '.1em', textTransform: 'uppercase' }}>조리중</span>
             </div>
             {cooking.length === 0 && (
-              <div style={{ color: '#bbb', fontSize: '14px', padding: '40px', textAlign: 'center', border: '2px dashed #e8ddd4', borderRadius: '16px', background: 'white' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-soft)', fontSize: '14px', border: '1px dashed var(--line)', borderRadius: '12px' }}>
                 조리중인 주문 없음
               </div>
             )}
             {cooking.map((order, idx) => (
               <div key={order.id} className="order-card"
-                style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '12px', borderLeft: '4px solid #2196F3', animationDelay: `${idx * 0.05}s` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#1c1814' }}>
+                style={{ padding: '14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--panel-2)', borderLeft: '4px solid var(--green)', animationDelay: `${idx * 0.05}s` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '22px' }}>
                     #{order.id.slice(-4).toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '12px', color: '#aaa', background: '#f5f0eb', padding: '3px 10px', borderRadius: '10px' }}>
-                    {getElapsed(order.created_at)}
-                  </span>
+                  </div>
+                  <div style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '999px', background: 'rgba(136,192,112,.18)', color: 'var(--green)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                    조리 중
+                  </div>
                 </div>
-                <ul style={{ listStyle: 'none', marginBottom: '16px' }}>
+                <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ink-soft)', marginBottom: '8px' }}>
                   {order.order_items?.map(item => (
-                    <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid #f0ebe4', fontSize: '14px', color: '#444' }}>
-                      <span>{item.menus?.name}</span>
-                      <span style={{ color: '#5b8dd9', fontWeight: 600 }}>×{item.quantity}</span>
-                    </li>
+                    <div key={item.id}>
+                      <strong style={{ color: 'var(--ink)' }}>{item.menus?.name}</strong> × {item.quantity}
+                    </div>
                   ))}
-                </ul>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px dashed var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
+                    {order.total_price?.toLocaleString()}원
+                  </div>
+                  <div>{getElapsed(order.created_at)}</div>
+                </div>
                 <button onClick={() => updateStatus(order.id, 'done')}
-                  style={{ width: '100%', padding: '12px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans' }}>
+                  style={{ width: '100%', marginTop: '10px', padding: '10px', background: 'var(--accent)', color: '#1a1410', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   완료 ✓
                 </button>
               </div>
