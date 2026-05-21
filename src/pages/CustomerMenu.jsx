@@ -48,8 +48,16 @@ export default function CustomerMenu() {
   const recognitionRef = useRef(null)
 
   useEffect(() => {
-    fetchMenus(); fetchTable(); fetchWaitCounts(); fetchAvgCookTimes(); fetchBusinessHours()
+    fetchMenus().then(() => {
+      fetchTable()
+      fetchWaitCounts()
+      fetchBusinessHours()
+    })
   }, [])
+
+  useEffect(() => {
+    if (menus.length > 0) fetchAvgCookTimes()
+  }, [menus])
 
   useEffect(() => {
     if (!orderId) return
@@ -64,32 +72,36 @@ export default function CustomerMenu() {
     const { data } = await supabase.from('menus').select('*')
     setMenus(data || [])
   }
+
   async function fetchTable() {
     const { data } = await supabase.from('tables').select('id').eq('table_number', tableId).single()
     if (data) setTableUUID(data.id)
   }
+
   async function fetchWaitCounts() {
     const { data } = await supabase.from('order_items').select('menu_id, orders(status)').in('orders.status', ['pending', 'cooking'])
     const counts = {}
     if (data) data.forEach(item => { if (item.orders) counts[item.menu_id] = (counts[item.menu_id] || 0) + 1 })
     setWaitCounts(counts)
   }
+
   async function fetchAvgCookTimes() {
-    const { data } = await supabase.from('orders').select('created_at, completed_at, order_items(menu_id)').not('completed_at', 'is', null).order('created_at', { ascending: false }).limit(50)
-    const totals = {}, counts = {}
-    if (data) {
-      data.forEach(order => {
-        const min = Math.round((new Date(order.completed_at) - new Date(order.created_at)) / 60000)
-        order.order_items?.forEach(item => {
-          if (!totals[item.menu_id]) { totals[item.menu_id] = 0; counts[item.menu_id] = 0 }
-          totals[item.menu_id] += min; counts[item.menu_id] += 1
+    try {
+      const BASE = 'http://127.0.0.1:8000'
+      const cookTimes = {}
+      await Promise.all(
+        menus.map(async (menu) => {
+          const res = await fetch(`${BASE}/predict/cooktime/${encodeURIComponent(menu.name)}`)
+          const data = await res.json()
+          cookTimes[menu.id] = data.estimated_minutes || menu.cook_time
         })
-      })
+      )
+      setAvgCookTimes(cookTimes)
+    } catch (e) {
+      console.error('조리시간 AI API 오류:', e)
     }
-    const avgs = {}
-    Object.keys(totals).forEach(id => { avgs[id] = Math.round(totals[id] / counts[id]) })
-    setAvgCookTimes(avgs)
   }
+
   async function fetchBusinessHours() {
     const today = new Date().getDay()
     const { data } = await supabase.from('business_hours').select('*').eq('day_of_week', today).single()
@@ -102,6 +114,7 @@ export default function CustomerMenu() {
       setIsOpen(data.is_open && cur >= oH * 60 + oM && cur <= cH * 60 + cM)
     }
   }
+
   async function fetchRecommendations(menuId) {
     const { data: orderItems } = await supabase.from('order_items').select('order_id').eq('menu_id', menuId)
     if (!orderItems?.length) return
@@ -123,11 +136,11 @@ export default function CustomerMenu() {
     if (i18n.language === 'ja') return menu.name_ja || menu.name
     return menu.name
   }
+
   function getEmoji(menu) { return EMOJI_MAP[menu.name] || '🍽️' }
+
   function getEstimatedTime(menu) {
-    const wait = waitCounts[menu.id] || 0
-    const base = avgCookTimes[menu.id] || menu.cook_time
-    return base + (wait * base)
+    return avgCookTimes[menu.id] || menu.cook_time
   }
 
   function addToCart(menu) {
@@ -138,6 +151,16 @@ export default function CustomerMenu() {
       return [...prev, {...menu, qty: 1}]
     })
     fetchRecommendations(menu.id)
+  }
+
+  async function callStaff() {
+    if (!tableUUID) return alert('테이블 정보를 찾을 수 없어요')
+    const { error } = await supabase.from('staff_calls').insert({
+      table_id: tableUUID,
+      table_number: parseInt(tableId),
+      status: 'pending'
+    })
+    if (!error) alert('직원을 호출했어요! 잠시만 기다려주세요 🙏')
   }
 
   function startVoice() {
@@ -170,7 +193,7 @@ export default function CustomerMenu() {
       await supabase.from('menus').update({ stock: newStock, is_available: newStock > 0 }).eq('id', item.id)
     }
     setOrderId(order.id); setOrderStatus('ordered'); setCart([]); setRecommendations([])
-    fetchMenus(); fetchWaitCounts(); fetchAvgCookTimes()
+    fetchMenus(); fetchWaitCounts()
   }
 
   const languages = [{ code: 'ko', flag: '🇰🇷' }, { code: 'en', flag: '🇺🇸' }, { code: 'zh', flag: '🇨🇳' }, { code: 'ja', flag: '🇯🇵' }]
@@ -226,8 +249,8 @@ export default function CustomerMenu() {
               <div style={{ fontSize: '12px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase', marginTop: '4px' }}>
                 Table {tableId}
                 {businessHours && (
-                  <span style={{ marginLeft: '12px', color: isOpen ? 'var(--green)' : 'var(--accent)', fontWeight: 600 }}>
-                    {isOpen ? `● 영업중 ${businessHours.open_time.slice(0,5)}-${businessHours.close_time.slice(0,5)}` : `✕ 영업종료`}
+                  <span style={{ marginLeft: '10px', color: isOpen ? 'var(--green)' : 'var(--accent)', fontWeight: 600 }}>
+                    {isOpen ? `● 영업중 ${businessHours.open_time.slice(0,5)}-${businessHours.close_time.slice(0,5)}` : '✕ 영업종료'}
                   </span>
                 )}
               </div>
@@ -261,7 +284,7 @@ export default function CustomerMenu() {
         )}
 
         {/* 카테고리 탭 */}
-        <div style={{ display: 'flex', gap: '0', background: 'var(--paper)', borderBottom: '1px solid var(--line)', padding: '0 24px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', background: 'var(--paper)', borderBottom: '1px solid var(--line)', padding: '0 24px', overflowX: 'auto' }}>
           {categories.map(cat => (
             <button key={cat} onClick={() => setActiveCategory(cat)} style={{
               padding: '14px 20px', border: 'none', background: 'none',
@@ -274,12 +297,12 @@ export default function CustomerMenu() {
         </div>
 
         {/* 메뉴 그리드 */}
-        <main style={{ padding: '22px 20px', paddingBottom: totalQty > 0 ? '160px' : '40px', maxWidth: '1100px', margin: '0 auto' }}>
+        <main style={{ padding: '22px 20px', paddingBottom: totalQty > 0 ? '160px' : '120px', maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
             {filtered.map((menu, idx) => {
               const inCart = cart.find(i => i.id === menu.id)
               return (
-                <div key={menu.id} className={`menu-card fade-up`}
+                <div key={menu.id} className="menu-card fade-up"
                   onClick={() => addToCart(menu)}
                   style={{
                     background: 'var(--paper)', border: inCart ? '1.5px solid var(--accent)' : '1px solid var(--line)',
@@ -290,20 +313,39 @@ export default function CustomerMenu() {
                     position: 'relative', animationDelay: `${idx * 0.04}s`,
                     boxShadow: inCart ? '0 8px 24px -10px rgba(176,74,47,.3)' : 'none'
                   }}>
+
                   {/* 품절 스탬프 */}
                   {!menu.is_available && (
                     <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--ink)', color: 'var(--paper)', padding: '4px 10px', borderRadius: '4px', fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '11px', letterSpacing: '.15em', transform: 'rotate(8deg)' }}>
                       SOLD OUT
                     </div>
                   )}
-                  {/* 담은 수량 뱃지 */}
+
+                  {/* 수량 뱃지 */}
                   {inCart && (
                     <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'var(--accent)', color: 'white', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '14px' }}>
                       {inCart.qty}
                     </div>
                   )}
-                  <div style={{ fontSize: '44px', lineHeight: 1, marginBottom: '10px' }}>{getEmoji(menu)}</div>
-                  <div style={{ fontFamily: 'Fraunces, "Noto Serif KR", serif', fontWeight: 600, fontSize: '19px', lineHeight: 1.25, marginBottom: '6px' }}>{getMenuName(menu)}</div>
+
+                  {/* 이미지 or 이모지 */}
+                  <div style={{ marginBottom: '10px' }}>
+                    {menu.image_url ? (
+                      <>
+                        <img src={menu.image_url} alt={menu.name}
+                          style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px' }}
+                          onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block' }}
+                        />
+                        <div style={{ fontSize: '44px', lineHeight: 1, display: 'none' }}>{getEmoji(menu)}</div>
+                      </>
+                    ) : (
+                      <div style={{ fontSize: '44px', lineHeight: 1 }}>{getEmoji(menu)}</div>
+                    )}
+                  </div>
+
+                  <div style={{ fontFamily: 'Fraunces, "Noto Serif KR", serif', fontWeight: 600, fontSize: '19px', lineHeight: 1.25, marginBottom: '6px' }}>
+                    {getMenuName(menu)}
+                  </div>
                   <div style={{ flex: 1 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--line)', paddingTop: '10px', marginTop: '10px' }}>
                     <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '18px', color: 'var(--accent)' }}>
@@ -324,6 +366,16 @@ export default function CustomerMenu() {
             })}
           </div>
         </main>
+
+        {/* 직원 호출 버튼 */}
+        <button onClick={callStaff} style={{
+          position: 'fixed', right: '20px', bottom: totalQty > 0 ? '185px' : '105px',
+          width: '64px', height: '64px', borderRadius: '50%', border: 'none',
+          background: 'var(--gold)', color: 'white', fontSize: '24px',
+          cursor: 'pointer', zIndex: 60,
+          boxShadow: '0 10px 28px -6px rgba(177,136,82,.5)',
+          transition: 'all .2s'
+        }}>🔔</button>
 
         {/* 음성 주문 FAB */}
         <button onClick={startVoice} style={{

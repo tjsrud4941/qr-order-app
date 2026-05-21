@@ -12,9 +12,11 @@ const styles = `
   body { font-family: "Noto Sans KR", sans-serif; background: var(--bg); color: var(--ink); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes bellRing { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-15deg)} 40%{transform:rotate(15deg)} 60%{transform:rotate(-10deg)} 80%{transform:rotate(10deg)} }
   .order-card { animation: fadeUp .3s ease both; transition: transform .2s; }
   .order-card:hover { transform: translateY(-2px); }
   .blink { animation: pulse 1.2s infinite; }
+  .bell-ring { animation: bellRing .6s ease; }
 `
 
 export default function KitchenDisplay() {
@@ -22,14 +24,31 @@ export default function KitchenDisplay() {
   const [waitCount, setWaitCount] = useState(0)
   const [cookingCount, setCookingCount] = useState(0)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [staffCalls, setStaffCalls] = useState([])
+  const [bellRing, setBellRing] = useState(false)
 
   useEffect(() => {
     fetchOrders()
-    const sub = supabase.channel('orders')
+    fetchStaffCalls()
+
+    const orderSub = supabase.channel('orders_kitchen')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .subscribe()
+
+    const staffSub = supabase.channel('staff_calls_kitchen')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_calls' }, () => {
+        fetchStaffCalls()
+        setBellRing(true)
+        setTimeout(() => setBellRing(false), 600)
+      })
+      .subscribe()
+
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => { supabase.removeChannel(sub); clearInterval(timer) }
+    return () => {
+      supabase.removeChannel(orderSub)
+      supabase.removeChannel(staffSub)
+      clearInterval(timer)
+    }
   }, [])
 
   async function fetchOrders() {
@@ -41,6 +60,20 @@ export default function KitchenDisplay() {
     setOrders(data || [])
     setWaitCount(data?.filter(o => o.status === 'pending').length || 0)
     setCookingCount(data?.filter(o => o.status === 'cooking').length || 0)
+  }
+
+  async function fetchStaffCalls() {
+    const { data } = await supabase
+      .from('staff_calls')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    setStaffCalls(data || [])
+  }
+
+  async function dismissStaffCall(id) {
+    await supabase.from('staff_calls').update({ status: 'done' }).eq('id', id)
+    fetchStaffCalls()
   }
 
   async function updateStatus(orderId, status) {
@@ -83,14 +116,29 @@ export default function KitchenDisplay() {
           </div>
         </header>
 
+        {/* 직원 호출 알림 */}
+        {staffCalls.length > 0 && (
+          <div style={{ background: 'rgba(212,176,112,.15)', borderBottom: '1px solid var(--line)', padding: '12px 28px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span className={bellRing ? 'bell-ring' : ''} style={{ fontSize: '18px' }}>🔔</span>
+            <span style={{ fontSize: '13px', color: 'var(--gold)', fontWeight: 600 }}>직원 호출</span>
+            {staffCalls.map(call => (
+              <div key={call.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--panel-2)', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--gold)' }}>
+                <span style={{ fontSize: '13px', color: 'var(--ink)' }}>Table {call.table_number}</span>
+                <button onClick={() => dismissStaffCall(call.id)}
+                  style={{ background: 'none', border: 'none', color: 'var(--ink-soft)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* 통계 */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', padding: '22px 28px', background: 'var(--panel)', borderBottom: '1px solid var(--line)' }}>
           {[
             { label: '조리 중', value: cookingCount, color: 'var(--green)', unit: '건' },
             { label: '대기', value: waitCount, color: 'var(--gold)', unit: '건' },
-            { label: '총 대기', value: orders.length, color: 'var(--accent)', unit: '건' },
+            { label: '직원 호출', value: staffCalls.length, color: staffCalls.length > 0 ? 'var(--gold)' : 'var(--ink-soft)', unit: '건' },
           ].map((stat, idx) => (
-            <div key={idx} style={{ background: 'var(--panel-2)', padding: '18px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+            <div key={idx} style={{ background: 'var(--panel-2)', padding: '18px', borderRadius: '12px', border: `1px solid ${idx === 2 && staffCalls.length > 0 ? 'var(--gold)' : 'var(--line)'}` }}>
               <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase' }}>{stat.label}</div>
               <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '36px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
                 {stat.value} <span style={{ fontSize: '16px' }}>{stat.unit}</span>
