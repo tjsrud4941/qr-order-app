@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
   :root {
     --bg: #1a1410; --panel: #241c16; --panel-2: #2e2520;
     --ink: #f5ead4; --ink-soft: #b09c84; --line: #3d3128;
@@ -100,7 +100,7 @@ export default function KitchenDisplay() {
         {/* 헤더 */}
         <header style={{ padding: '18px 28px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--panel)' }}>
           <div>
-            <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em' }}>
+            <div style={{ fontFamily: 'inherit', fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em' }}>
               맛집<span style={{ color: 'var(--accent)' }}>.</span> <span style={{ fontWeight: 300, color: 'var(--ink-soft)' }}>주방</span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--ink-soft)', letterSpacing: '.2em', textTransform: 'uppercase', marginTop: '2px' }}>Kitchen Display</div>
@@ -140,7 +140,7 @@ export default function KitchenDisplay() {
           ].map((stat, idx) => (
             <div key={idx} style={{ background: 'var(--panel-2)', padding: '18px', borderRadius: '12px', border: `1px solid ${idx === 2 && staffCalls.length > 0 ? 'var(--gold)' : 'var(--line)'}` }}>
               <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase' }}>{stat.label}</div>
-              <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '36px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
+              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '36px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
                 {stat.value} <span style={{ fontSize: '16px' }}>{stat.unit}</span>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function KitchenDisplay() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <span className="blink" style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', display: 'inline-block' }} />
-              <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '16px', color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase' }}>대기중</span>
+              <span style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '16px', color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase' }}>대기중</span>
             </div>
             {pending.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-soft)', fontSize: '14px', border: '1px dashed var(--line)', borderRadius: '12px' }}>
@@ -165,7 +165,7 @@ export default function KitchenDisplay() {
               <div key={order.id} className="order-card"
                 style={{ padding: '14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--panel-2)', borderLeft: '4px solid var(--gold)', animationDelay: `${idx * 0.05}s` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '22px' }}>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '22px' }}>
                     #{order.id.slice(-4).toUpperCase()}
                   </div>
                   <div style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '999px', background: 'rgba(212,176,112,.18)', color: 'var(--gold)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
@@ -180,7 +180,7 @@ export default function KitchenDisplay() {
                   ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px dashed var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
                     {order.total_price?.toLocaleString()}원
                   </div>
                   <div>{getElapsed(order.created_at)}</div>
@@ -197,7 +197,7 @@ export default function KitchenDisplay() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-              <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '16px', color: 'var(--green)', letterSpacing: '.1em', textTransform: 'uppercase' }}>조리중</span>
+              <span style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '16px', color: 'var(--green)', letterSpacing: '.1em', textTransform: 'uppercase' }}>조리중</span>
             </div>
             {cooking.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--ink-soft)', fontSize: '14px', border: '1px dashed var(--line)', borderRadius: '12px' }}>
@@ -208,7 +208,7 @@ export default function KitchenDisplay() {
               <div key={order.id} className="order-card"
                 style={{ padding: '14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--panel-2)', borderLeft: '4px solid var(--green)', animationDelay: `${idx * 0.05}s` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '22px' }}>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '22px' }}>
                     #{order.id.slice(-4).toUpperCase()}
                   </div>
                   <div style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '999px', background: 'rgba(136,192,112,.18)', color: 'var(--green)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
@@ -223,7 +223,7 @@ export default function KitchenDisplay() {
                   ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px dashed var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
                     {order.total_price?.toLocaleString()}원
                   </div>
                   <div>{getElapsed(order.created_at)}</div>

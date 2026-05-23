@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
   :root {
     --bg: #1a1410; --panel: #241c16; --panel-2: #2e2520;
     --ink: #f5ead4; --ink-soft: #b09c84; --line: #3d3128;
@@ -188,7 +188,7 @@ export default function AdminPanel() {
         {/* 헤더 */}
         <header style={{ padding: '18px 28px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--panel)' }}>
           <div>
-            <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em' }}>
+            <div style={{ fontFamily: 'inherit', fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em' }}>
               맛집<span style={{ color: 'var(--accent)' }}>.</span> <span style={{ fontWeight: 300, color: 'var(--ink-soft)' }}>대시보드</span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--ink-soft)', letterSpacing: '.2em', textTransform: 'uppercase', marginTop: '2px' }}>Owner Dashboard</div>
@@ -226,7 +226,7 @@ export default function AdminPanel() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
             <div style={{ background: 'var(--panel)', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '500px', border: '1px solid var(--line)', maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <span style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '20px' }}>메뉴 추가</span>
+                <span style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '20px' }}>메뉴 추가</span>
                 <button onClick={() => setShowAddMenu(false)} style={{ background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: '24px', cursor: 'pointer' }}>✕</button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -267,7 +267,7 @@ export default function AdminPanel() {
                   </select>
                 </div>
                 <button onClick={addMenu}
-                  style={{ width: '100%', padding: '14px', background: 'var(--accent)', color: '#1a1410', border: 'none', borderRadius: '10px', fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginTop: '4px' }}>
+                  style={{ width: '100%', padding: '14px', background: 'var(--accent)', color: '#1a1410', border: 'none', borderRadius: '10px', fontFamily: 'inherit', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginTop: '4px' }}>
                   + 메뉴 추가
                 </button>
               </div>
@@ -285,7 +285,7 @@ export default function AdminPanel() {
           ].map((stat, idx) => (
             <div key={idx} style={{ background: 'var(--panel-2)', padding: '18px', borderRadius: '12px', border: '1px solid var(--line)' }}>
               <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase' }}>{stat.label}</div>
-              <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: idx === 3 ? '20px' : '32px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
+              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: idx === 3 ? '20px' : '32px', lineHeight: 1.1, marginTop: '6px', color: stat.color }}>
                 {stat.value}<span style={{ fontSize: '14px' }}>{stat.unit}</span>
               </div>
             </div>
@@ -297,18 +297,18 @@ export default function AdminPanel() {
           {/* AI 예측 */}
           <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden', marginBottom: '22px' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
-              <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '18px' }}>🤖 Python AI 예측</div>
+              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '18px' }}>🤖 Python AI 예측</div>
             </div>
             <div style={{ padding: '16px 20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div style={{ background: 'var(--panel-2)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '8px' }}>내일 예상 주문수</div>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '40px', color: 'var(--green)', lineHeight: 1 }}>{predictions.tomorrowOrders}</div>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '40px', color: 'var(--green)', lineHeight: 1 }}>{predictions.tomorrowOrders}</div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '4px' }}>건 예상</div>
                 </div>
                 <div style={{ background: 'var(--panel-2)', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: 'var(--ink-soft)', letterSpacing: '.15em', textTransform: 'uppercase', marginBottom: '8px' }}>예상 피크타임</div>
-                  <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '40px', color: 'var(--gold)', lineHeight: 1 }}>{predictions.peakTime}</div>
+                  <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '40px', color: 'var(--gold)', lineHeight: 1 }}>{predictions.peakTime}</div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '4px' }}>가장 바쁜 시간</div>
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function AdminPanel() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                   {predictions.timeSlotMenus.map((slot, idx) => (
                     <div key={idx} style={{ background: 'var(--panel-2)', borderRadius: '10px', padding: '12px', border: '1px solid var(--line)' }}>
-                      <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '13px', color: 'var(--accent)', marginBottom: '4px' }}>{slot.label}</div>
+                      <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '13px', color: 'var(--accent)', marginBottom: '4px' }}>{slot.label}</div>
                       <div style={{ fontSize: '10px', color: 'var(--ink-soft)', marginBottom: '8px' }}>{slot.range}</div>
                       {slot.top.length === 0 ? <div style={{ fontSize: '11px', color: 'var(--line)' }}>데이터 없음</div> :
                         slot.top.map((item, i) => (
@@ -335,7 +335,7 @@ export default function AdminPanel() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
                   {predictions.dayMenus.map((d, idx) => (
                     <div key={idx} style={{ background: 'var(--panel-2)', borderRadius: '10px', padding: '10px', textAlign: 'center', border: '1px solid var(--line)' }}>
-                      <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '13px', color: 'var(--gold)', marginBottom: '6px' }}>{d.day}</div>
+                      <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '13px', color: 'var(--gold)', marginBottom: '6px' }}>{d.day}</div>
                       {d.top.length === 0 ? <div style={{ fontSize: '10px', color: 'var(--line)' }}>-</div> :
                         d.top.slice(0, 2).map((item, i) => (
                           <div key={i} style={{ fontSize: '10px', color: i === 0 ? 'var(--ink)' : 'var(--ink-soft)', marginBottom: '2px' }}>{item.name}</div>
@@ -351,7 +351,7 @@ export default function AdminPanel() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '22px' }}>
             <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
-                <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '18px' }}>⏰ 시간대별 주문수</div>
+                <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '18px' }}>⏰ 시간대별 주문수</div>
               </div>
               <div style={{ padding: '14px 20px' }}>
                 {hourlyData.length === 0 ? <div style={{ textAlign: 'center', padding: '30px', color: 'var(--ink-soft)', fontSize: '14px' }}>데이터 없음</div> : (
@@ -369,7 +369,7 @@ export default function AdminPanel() {
             </div>
             <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
-                <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '18px' }}>🍽️ 메뉴별 판매 비율</div>
+                <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '18px' }}>🍽️ 메뉴별 판매 비율</div>
               </div>
               <div style={{ padding: '14px 20px' }}>
                 {menuData.length === 0 ? <div style={{ textAlign: 'center', padding: '30px', color: 'var(--ink-soft)', fontSize: '14px' }}>데이터 없음</div> : (
@@ -391,7 +391,7 @@ export default function AdminPanel() {
           {/* 메뉴 관리 */}
           <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '18px' }}>메뉴 관리</div>
+              <div style={{ fontFamily: 'inherit', fontWeight: 700, fontSize: '18px' }}>메뉴 관리</div>
               <div style={{ display: 'flex', gap: '4px' }}>
                 {categories.map(cat => (
                   <button key={cat} onClick={() => setActiveCategory(cat)} style={{
@@ -456,7 +456,7 @@ export default function AdminPanel() {
                   </div>
 
                   {/* 가격 */}
-                  <div style={{ textAlign: 'center', fontFamily: 'Fraunces, serif', fontWeight: 700, fontSize: '15px', color: 'var(--accent)' }}>
+                  <div style={{ textAlign: 'center', fontFamily: 'inherit', fontWeight: 700, fontSize: '15px', color: 'var(--accent)' }}>
                     {menu.price.toLocaleString()}원
                   </div>
 
