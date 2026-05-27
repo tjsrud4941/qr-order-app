@@ -108,7 +108,12 @@ export default function CustomerMenu() {
       const cur = now.getHours() * 60 + now.getMinutes()
       const [oH, oM] = data.open_time.split(':').map(Number)
       const [cH, cM] = data.close_time.split(':').map(Number)
-      setIsOpen(data.is_open && cur >= oH * 60 + oM && cur <= cH * 60 + cM)
+      const open = oH * 60 + oM  // 540 (09:00)
+      const close = cH * 60 + cM // 120 (02:00)
+      const isOpenNow = close < open
+        ? cur >= open || cur <= close  // 자정 넘기는 경우 (09:00 ~ 02:00)
+        : cur >= open && cur <= close  // 일반적인 경우
+      setIsOpen(data.is_open && isOpenNow)
     }
   }
   async function fetchRecommendations(menuId) {
